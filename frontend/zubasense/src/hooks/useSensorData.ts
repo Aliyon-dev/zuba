@@ -28,11 +28,12 @@ const fallbackApiService = {
       device_id: 'ESP32_SoilSense_01',
       timestamp: new Date().toISOString(),
       soil_type: 'Loamy',
-      temperature: 24.5 + (Math.random() - 0.5) * 4,
-      moisture: 45.2 + (Math.random() - 0.5) * 10,
-      n_value: 78 + Math.floor((Math.random() - 0.5) * 20),
-      p_value: 42 + Math.floor((Math.random() - 0.5) * 16),
-      k_value: 156 + Math.floor((Math.random() - 0.5) * 30),
+      temperature: Math.round((24.5 + (Math.random() - 0.5) * 4) * 10) / 10,
+      moisture: Math.round((45.2 + (Math.random() - 0.5) * 10) * 10) / 10,
+      n_value: Math.round((78 + (Math.random() - 0.5) * 20) * 10) / 10,
+      p_value: Math.round((42 + (Math.random() - 0.5) * 16) * 10) / 10,
+      k_value: Math.round((156 + (Math.random() - 0.5) * 30) * 10) / 10,
+
       user_texture: 'Loamy',
       user_color: 'Brown',
       recommendation: 'Soil conditions are good for most crops'

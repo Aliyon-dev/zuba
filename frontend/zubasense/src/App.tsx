@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Play, Thermometer, Droplets, Activity, Leaf, MapPin, Cloud, Lightbulb, Power, Palette, Eye, RefreshCw, Wifi, WifiOff, AlertCircle } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { useSensorData } from './hooks/useSensorData';
+import { IrrigationManager } from './components/IrrigationManager';
 
 const ZubaSoilSense = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -148,6 +149,47 @@ const ZubaSoilSense = () => {
     return colors[type] || '#6b7280';
   };
 
+  // Estimate groundwater nitrate leaching risk from soil nitrogen and moisture
+  const computeNitrateRisk = ({ nitrogen, moisture }: { nitrogen: number; moisture: number }) => {
+    // Simple heuristic thresholds (ppm nitrogen in soil, % moisture)
+    // High risk when high N and wet soil promotes leaching
+    let level: 'Low' | 'Moderate' | 'High' = 'Low';
+    let color = 'text-green-700';
+    let bg = 'bg-green-50';
+    let tips: string[] = [];
+
+    if ((nitrogen >= 100 && moisture >= 50) || (nitrogen >= 80 && moisture >= 70)) {
+      level = 'High';
+      color = 'text-red-700';
+      bg = 'bg-red-50';
+      tips = [
+        'Reduce nitrogen application rate immediately',
+        'Schedule irrigation in shorter, targeted cycles to minimize leaching',
+        'Incorporate cover crops or organic matter to improve retention'
+      ];
+    } else if ((nitrogen >= 60 && moisture >= 45) || (nitrogen >= 80)) {
+      level = 'Moderate';
+      color = 'text-amber-700';
+      bg = 'bg-amber-50';
+      tips = [
+        'Split nitrogen applications (spoon feeding)',
+        'Irrigate in the early morning/evening to lower evaporation',
+        'Monitor forecast: postpone irrigation before heavy rain'
+      ];
+    } else {
+      tips = [
+        'Maintain current fertilization plan',
+        'Monitor moisture to avoid over-irrigation',
+        'Periodic soil testing to validate nitrate levels'
+      ];
+    }
+
+    // EPA/WHO drinking water guideline reference in mg/L nitrate-N
+    const guidelineNote = 'Guideline: 10 mg/L nitrate-nitrogen (NO3-N) in groundwater';
+
+    return { level, color, bg, tips, guidelineNote };
+  };
+
   const TabButton = ({ id, label, isActive, onClick }) => (
     <button
       onClick={() => onClick(id)}
@@ -211,6 +253,7 @@ const ZubaSoilSense = () => {
         <div className="flex justify-center mb-8 bg-gray-100 p-1 rounded-lg inline-flex w-full overflow-x-auto">
           <div className="flex space-x-1">
             <TabButton id="dashboard" label="Dashboard" isActive={activeTab === 'dashboard'} onClick={setActiveTab} />
+            <TabButton id="irrigation" label="Smart Irrigation" isActive={activeTab === 'irrigation'} onClick={setActiveTab} />
             <TabButton id="graphs" label="Analytics" isActive={activeTab === 'graphs'} onClick={setActiveTab} />
             <TabButton id="map" label="Field Map" isActive={activeTab === 'map'} onClick={setActiveTab} />
             <TabButton id="weather" label="Weather" isActive={activeTab === 'weather'} onClick={setActiveTab} />
@@ -424,6 +467,56 @@ const ZubaSoilSense = () => {
                   </div>
                 </div>
               )}
+            </div>
+
+          </div>
+        )}
+
+        {/* Smart Irrigation Tab */}
+        {activeTab === 'irrigation' && (
+          <div className="grid lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <IrrigationManager
+                sensorData={{
+                  temperature: sensorData.temperature,
+                  moisture: sensorData.moisture,
+                  nitrogen: sensorData.nitrogen,
+                  phosphorus: sensorData.phosphorus,
+                  potassium: sensorData.potassium,
+                }}
+                weatherData={weatherData}
+                onIrrigationToggle={(status) => setPumpStatus(status)}
+                irrigationStatus={pumpStatus}
+              />
+            </div>
+            
+            {/* Groundwater Nitrate Risk Panel */}
+            <div className="bg-white rounded-2xl shadow-xl p-6">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                <Leaf className="mr-3 text-green-600" size={24} />
+                Groundwater Nitrate Risk
+              </h2>
+              {(() => {
+                const risk = computeNitrateRisk({ nitrogen: sensorData.nitrogen, moisture: sensorData.moisture });
+                return (
+                  <div className={`p-4 rounded-xl border ${risk.bg}`}>
+                    <div className={`font-semibold mb-2 ${risk.color}`}>Risk Level: {risk.level}</div>
+                    <div className="text-sm text-gray-700 mb-3">
+                      Based on current nitrogen ({sensorData.nitrogen} ppm) and moisture ({sensorData.moisture}%),
+                      the risk of nitrate leaching to groundwater is assessed as <span className="font-semibold">{risk.level}</span>.
+                    </div>
+                    <div className="mb-3">
+                      <div className="text-sm font-medium text-gray-800 mb-1">Mitigation Tips:</div>
+                      <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                        {risk.tips.map((t, i) => (
+                          <li key={i}>{t}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="text-xs text-gray-500">{risk.guidelineNote}</div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         )}
