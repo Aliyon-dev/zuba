@@ -339,31 +339,40 @@ const ZubaSoilSense = () => {
                     <label className="block text-sm font-medium text-gray-600 mb-2">Soil Color</label>
                     <select 
                       value={soilColor} 
-                      onChange={(e) => setSoilColor(e.target.value)}
+                      onChange={(e) => {
+                        setSoilColor(e.target.value);
+                        if (e.target.value && soilTexture) {
+                          updatePreferences({ texture: soilTexture, color: e.target.value });
+                        }
+                      }}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                     >
                       <option value="">Select color</option>
-                      <option value="dark-brown">Dark Brown</option>
-                      <option value="light-brown">Light Brown</option>
-                      <option value="red">Red</option>
-                      <option value="yellow">Yellow</option>
-                      <option value="black">Black</option>
-                      <option value="gray">Gray</option>
+                      <option value="Brown">Brown</option>
+                      <option value="Black">Black</option>
+                      <option value="Red">Red</option>
+                      <option value="Yellow">Yellow</option>
+                      <option value="White">White</option>
+                      <option value="Grey">Grey</option>
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-600 mb-2">Soil Texture</label>
                     <select 
                       value={soilTexture} 
-                      onChange={(e) => setSoilTexture(e.target.value)}
+                      onChange={(e) => {
+                        setSoilTexture(e.target.value);
+                        if (e.target.value && soilColor) {
+                          updatePreferences({ texture: e.target.value, color: soilColor });
+                        }
+                      }}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                     >
                       <option value="">Select texture</option>
-                      <option value="sandy">Sandy</option>
-                      <option value="loamy">Loamy</option>
-                      <option value="clay">Clay</option>
-                      <option value="silty">Silty</option>
-                      <option value="peaty">Peaty</option>
+                      <option value="Gritty">Gritty</option>
+                      <option value="medium grit">Medium Grit</option>
+                      <option value="fine">Fine</option>
+                      <option value="Smooth-powdery">Smooth-powdery</option>
                     </select>
                   </div>
                 </div>
